@@ -16,47 +16,45 @@ def parse_rules(file_path):
 def match_packet(packet, rule):
     src_ip, src_port, dst_ip, dst_port = parse_rule(rule)
 
-    if 'tcp' in rule: # check TCP packets
-        if TCP not in packet or IP not in packet:  # Ensure packet contains both TCP and IP
+    if IP not in packet:
+        return False
+    # check general IP addresses
+    if src_ip != 'any' and packet[IP].src != src_ip:
             return False
-        if ICMP in packet or UDP in packet:  # Ensure packet isn't TCP/UDP
+    if dst_ip != 'any' and packet[IP].dst != dst_ip:
+            return False
+
+    # if 'tcp' in rule: # check TCP packets
+    if TCP in packet and ('tcp' in rule or 'ip' in rule):
+        if TCP not in packet or IP not in packet or ICMP in packet or UDP in packet:  # Ensure packet contains both TCP and IP
             return False
         
-        if src_ip != 'any' and packet[IP].src != src_ip:
-            return False
         if src_port != 'any' and packet[TCP].sport != int(src_port):
             return False
-        if dst_ip != 'any' and packet[IP].dst != dst_ip:
-            return False
+        
         if dst_port != 'any' and packet[TCP].dport != int(dst_port):
             return False
         return True
-    elif 'icmp' in rule:
-        if ICMP not in packet or IP not in packet:  # Ensure packet contains both ICMP and IP
-            return False
-        if TCP in packet or UDP in packet:  # Ensure packet isn't TCP/UDP
+    # elif 'icmp' in rule:
+    if ICMP in packet and ('icmp' in rule or 'ip' in rule):
+        if ICMP not in packet or IP not in packet or TCP in packet or UDP in packet:  # Ensure packet contains both ICMP and IP
             return False
 
-        if src_ip != 'any' and packet[IP].src != src_ip:
-            return False
         if src_port != 'any' and packet[ICMP].sport != int(src_port):
             return False
-        if dst_ip != 'any' and packet[IP].dst != dst_ip:
-            return False
+
         if dst_port != 'any' and packet[ICMP].dport != int(dst_port):
             return False
         return True
-    elif 'ip' in rule: 
-        if IP not in packet:
+    # elif 'udp' in rule: 
+    if UDP in packet and ('udp' in rule or 'ip' in rule):
+        if UDP not in packet or IP not in packet or TCP in packet or ICMP in packet: 
             return False
-        
-        if src_ip != 'any' and packet[IP].src != src_ip:
+
+        if src_port != 'any' and packet[UDP].sport != int(src_port):
             return False
-        if src_port != 'any' and packet[IP].sport != int(src_port):
-            return False
-        if dst_ip != 'any' and packet[IP].dst != dst_ip:
-            return False
-        if dst_port != 'any' and packet[IP].dport != int(dst_port):
+
+        if dst_port != 'any' and packet[UDP].dport != int(dst_port):
             return False
         return True
 
