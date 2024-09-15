@@ -1,5 +1,5 @@
 import sys
-from scapy.all import rdpcap, TCP, UDP, ICMP, IP
+from scapy.all import rdpcap, TCP, UDP, ICMP, IP, raw
 import time
 
 def parse_rules(file_path):
@@ -14,7 +14,7 @@ def parse_rules(file_path):
     return rules
 
 def match_packet(packet, rule):
-    src_ip, src_port, dst_ip, dst_port = parse_rule(rule)
+    src_ip, src_port, dst_ip, dst_port, content = parse_rule(rule)
 
     if IP not in packet:
         return False
@@ -31,9 +31,21 @@ def match_packet(packet, rule):
         
         if src_port != 'any' and packet[TCP].sport != int(src_port):
             return False
-        
-        if dst_port != 'any' and packet[TCP].dport != int(dst_port):
+        elif dst_port != 'any' and packet[TCP].dport != int(dst_port):
             return False
+        elif content is not None and raw in packet: # if there is a payload, decode it and check it
+            payload = packet[raw].load.decode(errors='ignore')
+            if content not in payload:
+                return False
+
+            # try:
+            #     payload = packet[raw].load.decode(errors='ignore')
+            #     if content not in payload:
+            #         return False
+            # except Exception as e:
+            # #     print(f"Error decoding payload: {e}")
+            #      return False
+
         return True
     # elif 'icmp' in rule:
     if ICMP in packet and ('icmp' in rule or 'ip' in rule):
@@ -42,9 +54,12 @@ def match_packet(packet, rule):
 
         if src_port != 'any' and packet[ICMP].sport != int(src_port):
             return False
-
-        if dst_port != 'any' and packet[ICMP].dport != int(dst_port):
+        elif dst_port != 'any' and packet[ICMP].dport != int(dst_port):
             return False
+        elif content is not None and raw in packet: # if there is a payload, decode it and check it
+            payload = packet[raw].load.decode(errors='ignore')
+            if content not in payload:
+                return False  
         return True
     # elif 'udp' in rule: 
     if UDP in packet and ('udp' in rule or 'ip' in rule):
@@ -53,14 +68,16 @@ def match_packet(packet, rule):
 
         if src_port != 'any' and packet[UDP].sport != int(src_port):
             return False
-
-        if dst_port != 'any' and packet[UDP].dport != int(dst_port):
+        elif dst_port != 'any' and packet[UDP].dport != int(dst_port):
             return False
+        elif content is not None and raw in packet: # if there is a payload, decode it and check it
+            payload = packet[raw].load.decode(errors='ignore')
+            if content not in payload:
+                return False
         return True
-
     return False
 
-# Parse source and destination IPs and Ports
+# Parse source and destination IPs and Ports + content if present
 def parse_rule(rule):
     rule = rule.rstrip(');')
     
@@ -74,8 +91,17 @@ def parse_rule(rule):
     dst_ip = parts[5]
     dst_port = parts[6]
 
+    content = None
+    if 'content' in rule:
+        content_start = rule.find('content:') + len('content:')
+        if rule[content_start] == ' ': # if space present after ':'
+            content_start += 1 # increment start to ignore space
+        content_start = rule.find('"', content_start) + 1
+        content_end = rule.find('"', content_start) 
+        content = rule[content_start:content_end] # store content
+
     # print(f"packet {src_ip} {src_port} {dst_ip} {dst_port}") - debugging
-    return src_ip, src_port, dst_ip, dst_port
+    return src_ip, src_port, dst_ip, dst_port, content
 
 def log_alert(message, file):
     timestamp = time.strftime("%Y-%m-%d %H:%M:%S")

@@ -1,1 +1,1 @@
-2024-09-16 02:19:08 - Alert: Detect a UDP packet from IP address 192.168.0.33 and port 1234 towards IP address 192.168.0.45 and port 4444
+2024-09-16 03:19:16 - Alert: Detect a malicious TCP packet
