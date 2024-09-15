@@ -8,18 +8,18 @@ def parse_rules(file_path):
         for line in file:
             if line.startswith("#") or not line.strip():
                 continue
-            rule = line.strip().rstrip(');')  # Remove trailing ');'
+            rule = line.strip().rstrip(');')  # Remove ');'
             rules.append(rule)
-            print(f"Parsed rule: {rule}")  # Debugging
+            # print(f"Parsed rule: {rule}")  # Debugging
     return rules
 
 def match_packet(packet, rule):
     src_ip, src_port, dst_ip, dst_port = parse_rule(rule)
 
-    if 'tcp' in rule:
-        if TCP not in packet or IP not in packet:  # Ensure the packet contains both TCP and IP layers
+    if 'tcp' in rule: # check TCP packets
+        if TCP not in packet or IP not in packet:  # Ensure packet contains both TCP and IP
             return False
-        if ICMP in packet or UDP in packet:  # Ensure the packet does not have ICMP or UDP layers
+        if ICMP in packet or UDP in packet:  # Ensure packet isn't TCP/UDP
             return False
         
         if src_ip != 'any' and packet[IP].src != src_ip:
@@ -32,28 +32,41 @@ def match_packet(packet, rule):
             return False
         return True
     elif 'icmp' in rule:
-        if ICMP not in packet or IP not in packet:  # Ensure the packet contains both ICMP and IP layers
+        if ICMP not in packet or IP not in packet:  # Ensure packet contains both ICMP and IP
             return False
-        if TCP in packet or UDP in packet:  # Ensure the packet does not have TCP or UDP layers
+        if TCP in packet or UDP in packet:  # Ensure packet isn't TCP/UDP
             return False
 
         if src_ip != 'any' and packet[IP].src != src_ip:
             return False
         if src_port != 'any' and packet[ICMP].sport != int(src_port):
             return False
-        if dst_ip != 'any' and packet[IP].dst != int(dst_ip):
+        if dst_ip != 'any' and packet[IP].dst != dst_ip:
             return False
-        if dst_port != 'any' and packet[ICMP].dport != dst_port:
+        if dst_port != 'any' and packet[ICMP].dport != int(dst_port):
+            return False
+        return True
+    elif 'ip' in rule: 
+        if IP not in packet:
+            return False
+        
+        if src_ip != 'any' and packet[IP].src != src_ip:
+            return False
+        if src_port != 'any' and packet[IP].sport != int(src_port):
+            return False
+        if dst_ip != 'any' and packet[IP].dst != dst_ip:
+            return False
+        if dst_port != 'any' and packet[IP].dport != int(dst_port):
             return False
         return True
 
     return False
 
-# Parce source/destination IPs and ports for TCP rules
-def parse_rule(rule): # parse_tcp_rule originally
+# Parse source and destination IPs and Ports
+def parse_rule(rule):
     rule = rule.rstrip(');')
     
-    # Split the rule based on spaces
+    # Split the rule on spaces
     parts = rule.split()
 
     # Extract protocol, source IP, source port, destination IP, and destination port
@@ -65,7 +78,6 @@ def parse_rule(rule): # parse_tcp_rule originally
 
     # print(f"packet {src_ip} {src_port} {dst_ip} {dst_port}") - debugging
     return src_ip, src_port, dst_ip, dst_port
-
 
 def log_alert(message, file):
     timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
@@ -88,12 +100,12 @@ def main():
         for packet in packets:
             for rule in rules:
                 if match_packet(packet, rule):
-                    msg_match = rule.find('msg:')
+                    msg_match = rule.find('msg:') # find where message starts
                     if msg_match != -1:
-                        msg_start = rule.find('"', msg_match) + 1
+                        msg_start = rule.find('"', msg_match) + 1 # remove quotation marks
                         msg_end = rule.find('"', msg_start)
                         message = rule[msg_start:msg_end]
-                        log_alert(message, file)
+                        log_alert(message, file) # add message string to log file
 
 if __name__ == "__main__":
     main()

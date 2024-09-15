@@ -1,6 +1,0 @@
-2024-09-16 01:37:07 - Alert: Detect an ICMP packet from IP address 192.168.0.33
-2024-09-16 01:37:07 - Alert: Detect an ICMP packet from IP address 192.168.0.33
-2024-09-16 01:37:07 - Alert: Detect an ICMP packet from IP address 192.168.0.33
-2024-09-16 01:37:07 - Alert: Detect an ICMP packet from IP address 192.168.0.33
-2024-09-16 01:37:07 - Alert: Detect an ICMP packet from IP address 192.168.0.33
-2024-09-16 01:37:07 - Alert: Detect an ICMP packet from IP address 192.168.0.33
