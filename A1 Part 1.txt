@@ -1,0 +1,55 @@
+# TASK1
+
+# Allow incoming SSH traffic (which is using the port 22) from a specific IP address (192.168.1.100) 
+# and deny all other incoming SSH connections.
+
+sudo iptables -A INPUT -p tcp -s 192.168.1.100 --dport 22 -j ACCEPT
+sudo iptables -A INPUT -p tcp --dport 22 -j DROP
+
+# TASK2
+
+# Allow incoming HTTP (port 80) and HTTPS (port 443) traffic but drop all other incoming traffic.
+
+sudo iptables -A INPUT -p tcp --dport 80 -j ACCEPT
+sudo iptables -A INPUT -p tcp --dport 443 -j ACCEPT
+sudo iptables -A INPUT -j DROP
+
+# TASK 3
+
+# Limits incoming ICMP ping requests (ICMP echo-request) to only two per second.
+# check after next week's lecture
+
+sudo iptables -A INPUT -p icmp --icmp-type 8 -m limit --limit 2/second --limit-burst 2 -j ACCEPT
+
+# TASK 4
+
+# Allow only established and related connections for incoming traffic, blocking new incoming 
+# connections except for SSH
+# accept all SSH
+# then block new for everything else
+
+sudo iptables -A INPUT -p tcp --dport 22 -j ACCEPT 
+sudo iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+sudo iptables -A INPUT -m state --state NEW -j DROP
+
+# TASK 5
+
+# Block all incoming and outgoing traffic by default but allow SSH access from a specific IP 
+# (192.168.1.100), HTTP/HTTPS traffic, and DNS queries.
+
+sudo iptables -A INPUT -p tcp -s 192.168.1.100 --dport 22 -j ACCEPT
+sudo iptables -A INPUT -p tcp --dport 80 -j ACCEPT
+sudo iptables -A INPUT -p tcp --dport 443 -j ACCEPT
+sudo iptables -A INPUT -p udp --dport 53 -j ACCEPT
+sudo iptables -A INPUT -p tcp --dport 53 -j ACCEPT
+sudo iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+sudo iptables -A INPUT -j DROP
+
+sudo iptables -A OUTPUT -p tcp --dport 22 -j ACCEPT
+sudo iptables -A OUTPUT -p tcp --dport 80 -j ACCEPT
+sudo iptables -A OUTPUT -p tcp --dport 443 -j ACCEPT
+sudo iptables -A OUTPUT -p udp --dport 53 -j ACCEPT
+sudo iptables -A OUTPUT -p tcp --dport 53 -j ACCEPT
+sudo iptables -A OUTPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+sudo iptables -A OUTPUT -j DROP
+
