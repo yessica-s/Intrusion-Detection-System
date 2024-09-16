@@ -1,6 +1,10 @@
 import sys
 from scapy.all import rdpcap, TCP, UDP, ICMP, IP, raw
 import time
+from datetime import datetime
+
+tcp_packet_timestamps = [] # store TCP packet timestamps
+tcp_packets = 0 # store recorded TCP packets
 
 def parse_rules_file(file_path):
     rules = []
@@ -37,11 +41,60 @@ def match_flags(flags, packet_flags):
             return False
     return True
 
-def check_tcp_flooding(packet, rule):
-    return True
+def extract_tcp_timestamp(packet):
+    if TCP in packet and packet[TCP].options:
+        for option in packet[TCP].options:
+            if option[0] == 'Timestamp':
+                return option[1][0]  # Returns the timestamp value
+    return None
+
+def check_tcp_flooding(packet, count, seconds):
+
+    # using packet timestamp method
+    tcp_packet_timestamps.append(packet.time)
+
+    # Method will remove any timestamps older than two seconds from most recent packet
+    found = True
+    while found == True:
+        for ts in tcp_packet_timestamps:
+            if tcp_packet_timestamps[len(tcp_packet_timestamps) - 1] - tcp_packet_timestamps[0] > int(seconds):
+                found = True
+                tcp_packet_timestamps.pop(0)
+            found = False
+
+    if len(tcp_packet_timestamps) > int(count): # if number of packets within 2 seconds of previous packet exceed count:
+        return True
+    return False
+
+
+    # current_time = time.time()
+    # global tcp_packet_timestamps
+    # packet_time = packet.time
+
+    # # If no packets recorded yet
+    # if not tcp_packet_timestamps:
+    #     tcp_packet_timestamps.append(packet_time)
+    #     return True  # No flooding
+
+    # # keeps timestamps in the past timeframe of seconds
+    # tcp_packet_timestamps = [timestamp for timestamp in tcp_packet_timestamps if current_time - timestamp <= int(seconds)]
+
+    # # most_recent = tcp_packet_timestamps[len(tcp_packet_timestamps) - 1]
+    # # if current_time - most_recent > int(seconds): 
+    # #     tcp_packet_timestamps = [None]
+    
+    # tcp_packet_timestamps.append(packet_time)
+    
+    # # len will be the number of packets received in the past 'seconds' seconds
+    # if len(tcp_packet_timestamps) > int(count): # if number of packets in timeframe exceeds direction_filter count
+    #     return False
+    # print(packet)
+    # datetime_str = datetime.fromtimestamp(packet_time).strftime('%Y-%m-%d %H:%M:%S')
+    # print(datetime_str)
+    # return True
 
 def match_packet(packet, rule):
-    src_ip, src_port, dst_ip, dst_port, content, flags = parse_rule(rule)
+    src_ip, src_port, dst_ip, dst_port, content, flags, count, seconds = parse_rule(rule)
 
     if IP not in packet:
         return False
@@ -57,11 +110,11 @@ def match_packet(packet, rule):
             return False     
         if not check_port_and_content(packet, TCP, src_port, dst_port, content):
             return False
-        elif len(flags) > 0: # If there are flags present in the rules          
+        if len(flags) > 0: # If there are flags present in the rules          
             packet_flags = packet[TCP].flags # Get flags in packet
             if not match_flags(flags, packet_flags): # ensure all required flags are present
                 return False
-        elif not check_tcp_flooding(): # Check TCP flooding
+        if not check_tcp_flooding(packet, count, seconds): # Check TCP flooding
             return False     
         return True
     if ICMP in packet and ('icmp' in rule or 'ip' in rule):
@@ -121,11 +174,25 @@ def parse_rule(rule):
         flag_end = rule.find(';', flag_start)
         if flag_end == -1: # if ';' not found since end of rule set end of flags to end of rule
             flag_end = len(rule)
-        flags_stripped= rule[flag_start:flag_end].strip() # separate the flags - assuming no +/- will be present
+        flags_stripped = rule[flag_start:flag_end].strip() # separate the flags - assuming no +/- will be present
         flags.append(flags_stripped)
 
+    # Parse count, seconds
+    count = None
+    seconds = None
+    if 'detection_filter' in rule:
+        count_start = rule.find('count ') + len('count ')
+        count_end = rule.find(',', count_start)
+        count = rule[count_start:count_end]
+
+        seconds_start = rule.find('seconds ') + len('seconds ')
+        seconds_end = rule.find(';', seconds_start)
+        if seconds_end == -1: # not found since end of rule set
+            seconds_end = len(rule)
+        seconds = rule[seconds_start:seconds_end]
+
     # print(f"packet {src_ip} {src_port} {dst_ip} {dst_port}") - debugging
-    return src_ip, src_port, dst_ip, dst_port, content, flags
+    return src_ip, src_port, dst_ip, dst_port, content, flags, count, seconds
 
 def log_alert(message, file):
     timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
