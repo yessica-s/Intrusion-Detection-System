@@ -49,7 +49,6 @@ def extract_tcp_timestamp(packet):
     return None
 
 def check_tcp_flooding(packet, count, seconds):
-
     # using packet timestamp method
     tcp_packet_timestamps.append(packet.time)
 
@@ -65,33 +64,6 @@ def check_tcp_flooding(packet, count, seconds):
     if len(tcp_packet_timestamps) > int(count): # if number of packets within 2 seconds of previous packet exceed count:
         return True
     return False
-
-
-    # current_time = time.time()
-    # global tcp_packet_timestamps
-    # packet_time = packet.time
-
-    # # If no packets recorded yet
-    # if not tcp_packet_timestamps:
-    #     tcp_packet_timestamps.append(packet_time)
-    #     return True  # No flooding
-
-    # # keeps timestamps in the past timeframe of seconds
-    # tcp_packet_timestamps = [timestamp for timestamp in tcp_packet_timestamps if current_time - timestamp <= int(seconds)]
-
-    # # most_recent = tcp_packet_timestamps[len(tcp_packet_timestamps) - 1]
-    # # if current_time - most_recent > int(seconds): 
-    # #     tcp_packet_timestamps = [None]
-    
-    # tcp_packet_timestamps.append(packet_time)
-    
-    # # len will be the number of packets received in the past 'seconds' seconds
-    # if len(tcp_packet_timestamps) > int(count): # if number of packets in timeframe exceeds direction_filter count
-    #     return False
-    # print(packet)
-    # datetime_str = datetime.fromtimestamp(packet_time).strftime('%Y-%m-%d %H:%M:%S')
-    # print(datetime_str)
-    # return True
 
 def match_packet(packet, rule):
     src_ip, src_port, dst_ip, dst_port, content, flags, count, seconds = parse_rule(rule)
