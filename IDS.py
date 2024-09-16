@@ -45,7 +45,7 @@ def match_packet(packet, rule):
 
     if IP not in packet:
         return False
-    # check general IP addresses
+    # check IP addresses match
     if src_ip != 'any' and packet[IP].src != src_ip:
             return False
     if dst_ip != 'any' and packet[IP].dst != dst_ip:
@@ -54,16 +54,7 @@ def match_packet(packet, rule):
     # if 'tcp' in rule: # check TCP packets
     if TCP in packet and ('tcp' in rule or 'ip' in rule):
         if TCP not in packet or IP not in packet or ICMP in packet or UDP in packet:  # Ensure packet contains both TCP and IP
-            return False
-        
-        # if src_port != 'any' and packet[TCP].sport != int(src_port):
-        #     return False
-        # elif dst_port != 'any' and packet[TCP].dport != int(dst_port):
-        #     return False
-        # elif content is not None and raw in packet: # if there is a payload, decode it and check it
-        #     payload = packet[raw].load.decode(errors='ignore')
-        #     if content not in payload:
-        #         return False
+            return False     
         if not check_port_and_content(packet, TCP, src_port, dst_port, content):
             return False
         elif len(flags) > 0: # If there are flags present in the rules          
@@ -71,47 +62,26 @@ def match_packet(packet, rule):
             if not match_flags(flags, packet_flags): # ensure all required flags are present
                 return False
         elif not check_tcp_flooding(): # Check TCP flooding
-            return False
-
+            return False     
         return True
-    # elif 'icmp' in rule:
     if ICMP in packet and ('icmp' in rule or 'ip' in rule):
         if ICMP not in packet or IP not in packet or TCP in packet or UDP in packet:  # Ensure packet contains both ICMP and IP
             return False
-        
         if not check_port_and_content(packet, ICMP, src_port, dst_port, content):
             return False
-        # if src_port != 'any' and packet[ICMP].sport != int(src_port):
-        #     return False
-        # elif dst_port != 'any' and packet[ICMP].dport != int(dst_port):
-        #     return False
-        # elif content is not None and raw in packet: # if there is a payload, decode it and check it
-        #     payload = packet[raw].load.decode(errors='ignore')
-        #     if content not in payload:
-        #         return False  
-        # return True
-    # elif 'udp' in rule: 
+        return True
     if UDP in packet and ('udp' in rule or 'ip' in rule):
         if UDP not in packet or IP not in packet or TCP in packet or ICMP in packet: 
             return False
-
         if not check_port_and_content(packet, UDP, src_port, dst_port, content):
             return False
-        # if src_port != 'any' and packet[UDP].sport != int(src_port):
-        #     return False
-        # elif dst_port != 'any' and packet[UDP].dport != int(dst_port):
-        #     return False
-        # elif content is not None and raw in packet: # if there is a payload, decode it and check it
-        #     payload = packet[raw].load.decode(errors='ignore')
-        #     if content not in payload:
-        #         return False
-        # return True
-    return False
+        return True
+    return False # unknown protocol
 
 def check_port_and_content(packet, protocol, src_port, dst_port, content):
-    if src_port != 'any' and packet[UDP].sport != int(src_port):
+    if src_port != 'any' and packet[protocol].sport != int(src_port):
         return False
-    elif dst_port != 'any' and packet[UDP].dport != int(dst_port):
+    elif dst_port != 'any' and packet[protocol].dport != int(dst_port):
         return False
     elif content is not None and raw in packet: # if there is a payload, decode it and check it
         payload = packet[raw].load.decode(errors='ignore')
