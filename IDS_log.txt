@@ -1,8 +1,4 @@
-2024-09-16 23:55:47 - Alert: TCP flooding detected
-2024-09-16 23:55:47 - Alert: TCP flooding detected
-2024-09-16 23:55:47 - Alert: TCP flooding detected
-2024-09-16 23:55:47 - Alert: TCP flooding detected
-2024-09-16 23:55:47 - Alert: TCP flooding detected
-2024-09-16 23:55:47 - Alert: TCP flooding detected
-2024-09-16 23:55:47 - Alert: TCP flooding detected
-2024-09-16 23:55:47 - Alert: TCP flooding detected
+2024-09-17 00:11:26 - Alert: Malicious TCP FIN Packet detected
+2024-09-17 00:11:26 - Alert: Malicious TCP FIN Packet detected
+2024-09-17 00:11:26 - Alert: Malicious TCP FIN Packet detected
+2024-09-17 00:11:26 - Alert: Malicious TCP FIN Packet detected
