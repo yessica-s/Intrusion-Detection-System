@@ -1,1 +1,15 @@
-2024-09-16 03:19:16 - Alert: Detect a malicious TCP packet
+2024-09-16 19:21:45 - Alert: Receive a fin packet
+2024-09-16 19:21:45 - Alert: Receive a syn packet
+2024-09-16 19:21:45 - Alert: Receive a rst packet
+2024-09-16 19:21:45 - Alert: Receive a syn packet
+2024-09-16 19:21:45 - Alert: Receive a rst packet
+2024-09-16 19:21:45 - Alert: Receive a rst packet
+2024-09-16 19:21:45 - Alert: Receive a syn packet
+2024-09-16 19:21:45 - Alert: Receive a rst packet
+2024-09-16 19:21:45 - Alert: Receive a ack packet
+2024-09-16 19:21:45 - Alert: Receive a syn packet
+2024-09-16 19:21:45 - Alert: Receive a syn packet
+2024-09-16 19:21:45 - Alert: Receive a rst packet
+2024-09-16 19:21:45 - Alert: Receive a syn packet
+2024-09-16 19:21:45 - Alert: Receive a fin packet
+2024-09-16 19:21:45 - Alert: Receive a fin packet
