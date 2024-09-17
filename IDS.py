@@ -14,7 +14,6 @@ def parse_rules_file(file_path):
                 continue
             rule = line.strip().rstrip(');')  # Remove ');'
             rules.append(rule)
-            # print(f"Parsed rule: {rule}")  # Debugging
     return rules
 
 def match_flags(flags, packet_flags):
@@ -190,7 +189,6 @@ def parse_rule(rule):
             seconds_end = len(rule)
         seconds = rule[seconds_start:seconds_end]
 
-    # print(f"packet {src_ip} {src_port} {dst_ip} {dst_port}") - debugging
     return src_ip, src_port, dst_ip, dst_port, content, flags, count, seconds
 
 def log_alert(message, file):
@@ -198,9 +196,6 @@ def log_alert(message, file):
     file.write(f"{timestamp} - Alert: {message}\n")
 
 def main():
-    if len(sys.argv) != 3:
-        print("Usage: python IDS.py <path_to_pcap_file> <path_to_IDS_rules>")
-        sys.exit(1)
 
     pcap_file = sys.argv[1]
     rules_file = sys.argv[2]

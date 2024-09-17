@@ -1,0 +1,1 @@
+sudo iptables -A INPUT -p icmp --icmp-type 8 -m limit --limit 2/second --limit-burst 2 -j ACCEPT
