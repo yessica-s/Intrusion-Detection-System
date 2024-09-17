@@ -3,7 +3,7 @@ from scapy.all import rdpcap, TCP, UDP, ICMP, IP, raw
 import time
 from datetime import datetime
 
-tcp_packet_timestamps = [] # store TCP packet timestamps
+packet_timestamps = [] # store TCP packet timestamps
 tcp_packets = 0 # store recorded TCP packets
 
 def parse_rules_file(file_path):
@@ -20,9 +20,13 @@ def parse_rules_file(file_path):
 def match_flags(flags, packet_flags):
     # the below flags and corresponding values were found from https://www.noction.com/blog/tcp-flags
     fin = 0b00000001
+    neg_fin = 0b11111110
     syn = 0b00000010
+    neg_syn = 0b11111101
     rst = 0b00000100
+    neg_rst = 0b11111011
     ack = 0b00010000
+    neg_ack = 0b11101111
 
     flag = flags[0] # ignore any trailing +
 
@@ -30,15 +34,31 @@ def match_flags(flags, packet_flags):
     if flag == 'F': # fin flag required
         if not (fin & packet_flags): # if that flag is not set in the packet
             return False
+        if len(flags) == 1: # if non-wildcard option make sure no other flags are set
+            temp = neg_fin & packet_flags
+            if temp > 0: # some other flag was set
+                return False
     elif flag == 'A': 
         if not (ack & packet_flags): # if that flag is not set in the packet
             return False
+        if len(flags) == 1: # if non-wildcard option make sure no other flags are set
+            temp = neg_ack & packet_flags
+            if temp > 0: # some other flag was set
+                return False
     elif flag == 'S': 
         if not (syn & packet_flags): # if that flag is not set in the packet
             return False
+        if len(flags) == 1: # if non-wildcard option make sure no other flags are set
+            temp = neg_syn & packet_flags
+            if temp > 0: # some other flag was set
+                return False
     elif flag == 'R': 
         if not (rst & packet_flags): # if that flag is not set in the packet
             return False
+        if len(flags) == 1: # if non-wildcard option make sure no other flags are set
+            temp = neg_rst & packet_flags
+            if temp > 0: # some other flag was set
+                return False
     return True
 
 def extract_tcp_timestamp(packet):
@@ -48,20 +68,20 @@ def extract_tcp_timestamp(packet):
                 return option[1][0]  # Returns the timestamp value
     return None
 
-def check_tcp_flooding(packet, count, seconds):
+def check_detection_filter(packet, count, seconds):
     # using packet timestamp method
-    tcp_packet_timestamps.append(packet.time)
+    packet_timestamps.append(packet.time)
 
     # Method will remove any timestamps older than two seconds from most recent packet
     found = True
     while found == True:
-        for ts in tcp_packet_timestamps:
-            if tcp_packet_timestamps[len(tcp_packet_timestamps) - 1] - tcp_packet_timestamps[0] > int(seconds):
+        for ts in packet_timestamps:
+            if packet_timestamps[len(packet_timestamps) - 1] - packet_timestamps[0] > int(seconds):
                 found = True
-                tcp_packet_timestamps.pop(0)
+                packet_timestamps.pop(0)
             found = False
 
-    if len(tcp_packet_timestamps) > int(count): # if number of packets within 2 seconds of previous packet exceed count:
+    if len(packet_timestamps) > int(count): # if number of packets within 2 seconds of previous packet exceed count:
         return True
     return False
 
@@ -86,20 +106,27 @@ def match_packet(packet, rule):
             packet_flags = packet[TCP].flags # Get flags in packet
             if not match_flags(flags, packet_flags): # ensure all required flags are present
                 return False
-        if not check_tcp_flooding(packet, count, seconds): # Check TCP flooding
-            return False     
+        if not (count == None or seconds == None):
+            if not check_detection_filter(packet, count, seconds): # Check TCP flooding
+                return False     
         return True
     if ICMP in packet and ('icmp' in rule or 'ip' in rule):
         if ICMP not in packet or IP not in packet or TCP in packet or UDP in packet:  # Ensure packet contains both ICMP and IP
             return False
         if not check_port_and_content(packet, ICMP, src_port, dst_port, content):
             return False
+        if not (count == None or seconds == None):
+            if not check_detection_filter(packet, count, seconds): # Check TCP flooding
+                return False  
         return True
     if UDP in packet and ('udp' in rule or 'ip' in rule):
         if UDP not in packet or IP not in packet or TCP in packet or ICMP in packet: 
             return False
         if not check_port_and_content(packet, UDP, src_port, dst_port, content):
             return False
+        if not (count == None or seconds == None):
+            if not check_detection_filter(packet, count, seconds): # Check TCP flooding
+                return False  
         return True
     return False # unknown protocol
 
@@ -146,7 +173,7 @@ def parse_rule(rule):
         flag_end = rule.find(';', flag_start)
         if flag_end == -1: # if ';' not found since end of rule set end of flags to end of rule
             flag_end = len(rule)
-        flags_stripped = rule[flag_start:flag_end].strip() # separate the flags - assuming no +/- will be present
+        flags_stripped = rule[flag_start:flag_end].strip() # separate the flags
         flags.append(flags_stripped)
 
     # Parse count, seconds
