@@ -1,4 +1,4 @@
-2024-09-17 21:09:51 - Alert: Malicious TCP FIN Packet detected
-2024-09-17 21:09:51 - Alert: Malicious TCP FIN Packet detected
-2024-09-17 21:09:51 - Alert: Malicious TCP FIN Packet detected
-2024-09-17 21:09:51 - Alert: Malicious TCP FIN Packet detected
+2024-09-18 22:14:14 - Alert: Malicious TCP FIN Packet detected
+2024-09-18 22:14:14 - Alert: Malicious TCP FIN Packet detected
+2024-09-18 22:14:14 - Alert: Malicious TCP FIN Packet detected
+2024-09-18 22:14:14 - Alert: Malicious TCP FIN Packet detected

@@ -17,7 +17,9 @@ def parse_rules_file(file_path):
     return rules
 
 def match_flags(flags, packet_flags):
-    # the below flags and corresponding values were found from https://www.noction.com/blog/tcp-flags
+    # Reference for the below flags
+    # Noction, "Decoding TCP Flags in NetFlow and IPFIX," *Noction*, Dec. 5, 2022. [Online]. Available: https://www.noction.com/blog/tcp-flags. [Accessed: Sep. 17, 2024].
+
     fin = 0b00000001
     neg_fin = 0b11111110
     syn = 0b00000010
@@ -63,7 +65,7 @@ def match_flags(flags, packet_flags):
 def extract_tcp_timestamp(packet):
     if TCP in packet and packet[TCP].options:
         for option in packet[TCP].options:
-            if option[0] == 'Timestamp': 
+            if option[0] == 'Timestamp':
                 return option[1][0]  # Returns the timestamp value
     return None
 
@@ -173,7 +175,7 @@ def parse_rule(rule):
         if flag_end == -1: # if ';' not found since end of rule set end of flags to end of rule
             flag_end = len(rule)
         flags_stripped = rule[flag_start:flag_end].strip() # separate the flags
-        flags = flags_stripped
+        flags.append(flags_stripped)
 
     # Parse count, seconds
     count = None

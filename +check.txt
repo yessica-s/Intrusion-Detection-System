@@ -1,0 +1,2 @@
+# Check to make sure the + flag is properly evaluated
+alert tcp any any -> any any (msg: "Packet with S flag set detected"; flags: S+;)
